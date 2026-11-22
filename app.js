@@ -384,7 +384,7 @@
     try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) {}
 
     var state = (saved && Array.isArray(saved.slides) && saved.slides.length) ? saved : {
-      roomCode: String(Math.floor(1000 + Math.random() * 9000)),
+      roomCode: String(Math.floor(100000 + Math.random() * 900000)),
       limitOnce: true,
       activeIndex: 0,
       slides: [createSlide('wordcloud'), createSlide('poll')]
@@ -399,7 +399,11 @@
 
     function updateLiveUsersUI() {
       var cnt = Object.keys(activeConns).filter(function (k) { return activeConns[k] && activeConns[k].open; }).length;
-      el('liveUsersPill').textContent = '접속 중 ' + cnt + '명';
+      var pill = el('liveUsersPill');
+      var stateText = cnt <= 40 ? '쾌적 · 권장 ≤60명' : (cnt <= 65 ? '원활 · 합반 수준' : '혼잡 주의 · 방 분리 권장');
+      pill.textContent = '접속 중 ' + cnt + '명 (' + stateText + ')';
+      pill.classList.toggle('is-busy', cnt > 40 && cnt <= 65);
+      pill.classList.toggle('is-high', cnt > 65);
       el('stageLiveUsers').textContent = String(cnt);
     }
 
@@ -1095,7 +1099,7 @@
       });
       peer.on('error', function (err) {
         if (err && err.type === 'unavailable-id') {
-          state.roomCode = String(Math.floor(1000 + Math.random() * 9000));
+          state.roomCode = String(Math.floor(100000 + Math.random() * 900000));
           persist();
           startPeerHost();
         }
@@ -1271,6 +1275,70 @@
       a.download = 'tong-menti-Q' + (state.activeIndex + 1) + '.csv';
       a.click();
     });
+
+    // 전체 슬라이드 통합 엑셀(CSV) 다운로드
+    el('exportAllCsvBtn').addEventListener('click', function () {
+      var rows = [['슬라이드번호', '활동유형', '질문', '순위/번호', '항목/작성자', '수치/공감', '비율(%)', '상세내용']];
+      state.slides.forEach(function (sl, sIdx) {
+        var d = computeStructuredData(sl);
+        if (!d.rows.length) {
+          rows.push([String(sIdx + 1), TYPE_META[sl.type].label, sl.question, '-', '(응답 없음)', '0', '0', '']);
+        } else {
+          d.rows.forEach(function (r) {
+            rows.push([
+              String(sIdx + 1), TYPE_META[sl.type].label, sl.question,
+              String(r.rank || '-'), r.label, String(r.value), String(r.pct || 0), r.extra || ''
+            ]);
+          });
+        }
+      });
+      var csv = '\uFEFF' + rows.map(function (r) {
+        return r.map(function (c) { return '"' + String(c || '').replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\r\n');
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+      a.download = 'tong-menti-전체결과-' + state.roomCode + '.csv';
+      a.click();
+      showToast('전체 ' + state.slides.length + '개 질문 결과를 통합 엑셀(CSV)로 다운로드했습니다.');
+    });
+
+    // 수업 세션 백업(.json) 다운로드 & 불러오기
+    el('exportJsonBtn').addEventListener('click', function () {
+      var payload = JSON.stringify({
+        exportedAt: new Date().toISOString(),
+        app: 'tong-menti-pro',
+        slides: state.slides
+      }, null, 2);
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([payload], { type: 'application/json;charset=utf-8;' }));
+      a.download = 'tong-menti-수업백업-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      showToast('수업 질문·응답 전체를 백업(.json) 파일로 저장했습니다.');
+    });
+
+    el('importJsonInput').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        try {
+          var parsed = JSON.parse(fr.result);
+          var slides = Array.isArray(parsed.slides) ? parsed.slides : (Array.isArray(parsed) ? parsed : null);
+          if (!slides || !slides.length) throw new Error('invalid');
+          state.slides = slides;
+          state.activeIndex = 0;
+          persist(); renderAll(); broadcastConfig();
+          showToast('백업 파일에서 ' + slides.length + '개 질문 슬라이드를 불러왔습니다.');
+        } catch (e) {
+          showToast('올바른 T-ong 멘티미터 백업(.json) 파일이 아닙니다.');
+        }
+      };
+      fr.readAsText(f);
+      this.value = '';
+    });
+
+    // 접속 중 배지 클릭 시 동시 접속 안내(사용설명서) 열기
+    el('liveUsersPill').addEventListener('click', function () { openModal('manualModal'); });
 
     el('exportPngBtn').addEventListener('click', function () {
       if (el('canvasStageWrap').style.display === 'none') {

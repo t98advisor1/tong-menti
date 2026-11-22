@@ -18,7 +18,7 @@
           <strong class="tm-brand-title">T-ong 멘티미터 Pro</strong>
           <div class="tm-status-line">
             <span class="tm-conn-badge" id="connBadge">실시간 방 여는 중...</span>
-            <span class="tm-live-users" id="liveUsersPill" title="현재 QR로 연결된 학생 기기 수">접속 중 0명</span>
+            <button type="button" class="tm-live-users" id="liveUsersPill" title="클릭하면 동시 접속자 권장 인원 및 관리 안내를 봅니다">접속 중 0명 (쾌적 · 권장 ≤60명)</button>
           </div>
         </div>
       </div>
@@ -116,10 +116,20 @@
           <div class="tm-side-btns">
             <button type="button" class="tm-btn tm-btn-primary" id="simulateBtn">모의 학생 18명 응답 체험</button>
             <div class="tm-btn-pair">
-              <button type="button" class="tm-btn tm-btn-xs" id="exportCsvBtn">엑셀(CSV) 저장</button>
-              <button type="button" class="tm-btn tm-btn-xs" id="exportPngBtn">차트 PNG 저장</button>
+              <button type="button" class="tm-btn tm-btn-xs" id="exportCsvBtn" title="현재 질문 결과를 엑셀(CSV)로 다운로드">현재 엑셀(CSV)</button>
+              <button type="button" class="tm-btn tm-btn-xs" id="exportAllCsvBtn" title="모든 질문 슬라이드 결과를 1개의 엑셀(CSV)로 통합 다운로드">전체 엑셀(CSV)</button>
             </div>
-            <button type="button" class="tm-btn tm-btn-xs tm-btn-danger" id="resetRespBtn">현재 질문 응답 초기화</button>
+            <div class="tm-btn-pair">
+              <button type="button" class="tm-btn tm-btn-xs" id="exportJsonBtn" title="질문과 응답 전체를 JSON 파일로 백업 다운로드">수업 백업(.json)</button>
+              <label class="tm-btn tm-btn-xs" style="cursor:pointer;" title="저장해 둔 수업 백업(.json) 파일 불러오기">
+                백업 불러오기
+                <input type="file" id="importJsonInput" accept=".json,application/json" hidden>
+              </label>
+            </div>
+            <div class="tm-btn-pair">
+              <button type="button" class="tm-btn tm-btn-xs" id="exportPngBtn">차트 PNG 저장</button>
+              <button type="button" class="tm-btn tm-btn-xs tm-btn-danger" id="resetRespBtn">현재 응답 초기화</button>
+            </div>
           </div>
         </div>
 
@@ -288,21 +298,24 @@
         </section>
 
         <section class="tm-manual-sec">
-          <h4>3. 동시 접속자 관리 방식 및 안정화 설계</h4>
+          <h4>3. 동시 접속자 수 권장 기준 및 선생님별 개별 독립 사용 안내</h4>
           <ul>
-            <li><b>실시간 접속 인원 모니터링</b>: 상단 <b>[접속 중 N명]</b> 배지에 현재 QR로 연결된 학생 기기 수가 실시간 표시됩니다.</li>
-            <li><b>1인 1회 제한 (중복 제출 방지)</b>: <b>[1인 1회: ON]</b> 상태에서는 같은 학생 기기가 한 질문에 중복 투표를 할 수 없도록 자동 제어합니다.</li>
-            <li><b>대규모 동시 제출 최적화</b>: 30~80명이 동시에 제출 버튼을 눌러도 브라우저가 멈추지 않도록 차트 렌더링을 자동 배치(Debounce) 처리하며, 학생 Wi-Fi가 잠깐 끊겨도 자동 재연결됩니다.</li>
-            <li><b>트래픽 격리</b>: GitHub Pages 독립 CDN에서 실행되므로 T-ong 교무수첩 본체 속도에 전혀 영향을 주지 않습니다.</li>
+            <li><b>모든 선생님이 100% 개별 독립 사용 가능</b>: 전국 여러 선생님이 같은 사이트에 동시에 접속해도 각 선생님의 브라우저에만 데이터가 저장되고, <b>고유한 6자리 방 코드</b>가 개별 발급되므로 반별 수업 데이터가 절대 섞이지 않습니다.</li>
+            <li><b>1개 방 기준 권장 동시 접속 인원</b>:
+              <br>· <b>1~40명 (일반 학급 1개 반)</b>: 매우 쾌적 (0.1초 이내 실시간 반영)
+              <br>· <b>41~60명 (2개 반 합반 · 소강당)</b>: 원활 (배치 렌더링 자동 작동)
+              <br>· <b>60명 초과 (전교생 · 대강당 100명 이상)</b>: 교사 PC 1대의 P2P 연결 한계로 일부 지연이 생길 수 있어 <b>반별·학년별로 방을 나누어 진행</b>하는 것을 권장합니다.
+            </li>
+            <li><b>실시간 접속자 수 확인 &amp; 1인 1회 제한</b>: 상단 <b>[접속 중 N명]</b> 배지로 현재 연결된 학생 기기 수를 확인하고, <b>[1인 1회: ON]</b>으로 중복 투표를 방지할 수 있습니다.</li>
           </ul>
         </section>
 
         <section class="tm-manual-sec">
-          <h4>4. 데이터 구조화 · 그래프 전환 · 보고서 출력</h4>
+          <h4>4. 교사용 결과 다운로드 · 수업 백업/불러오기 · 보고서 출력</h4>
           <ul>
-            <li>상단 <b>[시각화 보기]</b>에서 <b>기본 차트 · 가로 막대 · 세로 막대 · 도넛 비율 · 구조화 데이터 표</b>를 1클릭으로 전환하며 설명할 수 있습니다.</li>
-            <li>화면 하단의 <b>구조화 데이터 요약 바</b>가 1위 항목, 총 응답 수, 평균·표준편차·정답률 등을 한국어로 자동 정리해 보여줍니다.</li>
-            <li>수업 후 <b>[엑셀(CSV) 저장]</b>(한글 깨짐 없는 UTF-8 BOM), <b>[차트 PNG 저장]</b>, <b>[PDF 보고서]</b>(전체 슬라이드 통합 A4 출력)로 결과물을 바로 보관할 수 있습니다.</li>
+            <li><b>현재/전체 엑셀(CSV) 다운로드</b>: 한글 깨짐 없는 UTF-8 BOM 형식으로 현재 질문 또는 전체 질문 결과를 엑셀 파일로 바로 내려받습니다.</li>
+            <li><b>수업 백업(.json) / 불러오기</b>: 집이나 교무실에서 미리 만든 질문 세트(또는 수업 후 응답 포함 데이터)를 파일로 저장해 두었다가 교실 PC에서 그대로 불러와 이어서 수업할 수 있습니다.</li>
+            <li><b>차트 PNG 저장 &amp; A4 PDF 보고서</b>: 워드클라우드·도넛·2×2 차트를 이미지로 저장하거나, 전체 슬라이드 통합 A4 PDF 보고서로 인쇄·보관할 수 있습니다.</li>
           </ul>
         </section>
       </div>
