@@ -1398,6 +1398,12 @@
     el('openQrBtn').addEventListener('click', function () { renderQrCodes(); openModal('qrModal'); });
     el('presQrBtn').addEventListener('click', function () { renderQrCodes(); openModal('qrModal'); });
     el('openManualBtn').addEventListener('click', function () { openModal('manualModal'); });
+    document.querySelectorAll('.tm-mnav-link').forEach(function (lnk) {
+      lnk.addEventListener('click', function () {
+        document.querySelectorAll('.tm-mnav-link').forEach(function (x) { x.classList.remove('active'); });
+        lnk.classList.add('active');
+      });
+    });
     document.querySelectorAll('[data-close]').forEach(function (b) {
       b.addEventListener('click', function () { el(b.getAttribute('data-close')).classList.remove('show'); });
     });
