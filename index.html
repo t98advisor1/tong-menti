@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>T-ong 멘티미터 | 실시간 워드클라우드 · 투표 · 척도 · Q&A</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./qr-lib.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+</head>
+<body>
+  <!-- ===================== 교사용 실시간 멘티미터 대시보드 ===================== -->
+  <div id="teacherView" class="tm-app">
+    <header class="tm-header no-print">
+      <div class="tm-brand">
+        <span class="tm-logo">M</span>
+        <div class="tm-brand-txt">
+          <strong class="tm-brand-title">T-ong 멘티미터</strong>
+          <span class="tm-conn-badge" id="connBadge">실시간 방 여는 중...</span>
+        </div>
+      </div>
+
+      <div class="tm-type-tabs" role="tablist" aria-label="활동 유형">
+        <button type="button" class="tm-type-btn active" data-type="wordcloud">워드 클라우드</button>
+        <button type="button" class="tm-type-btn" data-type="poll">객관식 투표</button>
+        <button type="button" class="tm-type-btn" data-type="scale">1~5 척도</button>
+        <button type="button" class="tm-type-btn" data-type="open">자유 의견 · Q&amp;A</button>
+      </div>
+
+      <div class="tm-actions">
+        <button type="button" class="tm-btn tm-btn-qr" id="openQrBtn">QR 참여코드</button>
+        <button type="button" class="tm-btn tm-btn-fs" id="fullscreenBtn">전체화면 송출</button>
+        <button type="button" class="tm-btn tm-btn-pdf" id="exportPdfBtn">PDF 보고서</button>
+        <a href="https://t98advisor1.github.io/tong-padlet/" target="_blank" rel="noopener noreferrer" class="tm-btn tm-btn-ghost">패들렛 ↗</a>
+        <a href="https://t-ong.vercel.app/" target="_blank" rel="noopener noreferrer" class="tm-btn tm-btn-ghost">T-ong ↗</a>
+      </div>
+    </header>
+
+    <div class="tm-workspace no-print">
+      <!-- 왼쪽: 질문·선택지 설정 & QR 미리보기 사이드바 -->
+      <aside class="tm-sidebar" id="tmSidebar">
+        <div class="tm-side-sec">
+          <label class="tm-label" for="questionInput">수업 질문 (학생 화면에 그대로 표시)</label>
+          <textarea id="questionInput" class="tm-input tm-textarea" rows="2">오늘 수업에서 가장 기억에 남는 핵심 키워드는 무엇인가요?</textarea>
+        </div>
+
+        <!-- 객관식 선택지 편집 (poll 모드일 때 표시) -->
+        <div class="tm-side-sec" id="pollOptionsSec" style="display:none;">
+          <div class="tm-sec-row">
+            <label class="tm-label">투표 선택지 (2~6개)</label>
+            <button type="button" class="tm-btn tm-btn-xs" id="addOptionBtn">+ 선택지</button>
+          </div>
+          <div id="pollOptionsList" class="tm-opt-list"></div>
+        </div>
+
+        <!-- 척도 라벨 편집 (scale 모드일 때 표시) -->
+        <div class="tm-side-sec" id="scaleLabelsSec" style="display:none;">
+          <label class="tm-label">척도 양 끝 라벨 (1점 ~ 5점)</label>
+          <div class="tm-scale-edit">
+            <input type="text" id="scaleMinInput" class="tm-input" value="전혀 그렇지 않다 (1)">
+            <input type="text" id="scaleMaxInput" class="tm-input" value="매우 그렇다 (5)">
+          </div>
+        </div>
+
+        <!-- 워드클라우드 설정 (wordcloud 모드일 때 표시) -->
+        <div class="tm-side-sec" id="wcConfigSec">
+          <label class="tm-label" for="wcMaxWordsSelect">학생 1인당 입력 단어 수</label>
+          <select id="wcMaxWordsSelect" class="tm-input">
+            <option value="1">1개 단어</option>
+            <option value="2">최대 2개 단어</option>
+            <option value="3" selected>최대 3개 단어</option>
+          </select>
+        </div>
+
+        <!-- 빠른 제어 버튼 -->
+        <div class="tm-side-sec">
+          <div class="tm-stat-row">
+            <span>총 응답 수</span>
+            <strong id="totalRespCount">0건</strong>
+          </div>
+          <div class="tm-side-btns">
+            <button type="button" class="tm-btn tm-btn-primary" id="simulateBtn">모의 응답 15명 체험</button>
+            <button type="button" class="tm-btn tm-btn-xs" id="exportPngBtn">결과 이미지(PNG)</button>
+            <button type="button" class="tm-btn tm-btn-xs tm-btn-danger" id="resetRespBtn">응답 초기화</button>
+          </div>
+        </div>
+
+        <!-- 사이드바 미니 QR 카드 -->
+        <div class="tm-mini-qr-card">
+          <div class="tm-mini-qr-head">
+            <span>학생 QR 즉시 참여</span>
+            <strong id="miniRoomCode">----</strong>
+          </div>
+          <div id="miniQrBox" class="tm-mini-qr-box"></div>
+          <button type="button" class="tm-btn tm-btn-xs tm-btn-full" id="copyLinkMiniBtn">학생 참여 링크 복사</button>
+        </div>
+      </aside>
+
+      <!-- 오른쪽: 대형 프로젝터 송출 스테이지 -->
+      <main class="tm-stage" id="tmStage">
+        <div class="tm-stage-head">
+          <span class="tm-stage-badge" id="stageTypeBadge">WORD CLOUD</span>
+          <h1 class="tm-stage-q" id="stageQuestionText">오늘 수업에서 가장 기억에 남는 핵심 키워드는 무엇인가요?</h1>
+          <div class="tm-stage-meta">
+            <span>참여 코드 <b id="stageRoomCode">----</b></span>
+            <span>실시간 응답 <b id="stageRespCount">0</b>건</span>
+          </div>
+        </div>
+
+        <!-- 1. 워드 클라우드 스테이지 -->
+        <div id="wcStage" class="tm-viz-box tm-wc-stage">
+          <div class="tm-wc-canvas-wrap">
+            <canvas id="wcCanvas"></canvas>
+            <div id="wcEmptyHint" class="tm-empty-hint">
+              학생들이 QR 코드로 단어를 제출하면 실시간 워드 클라우드가 그려집니다.<br>
+              왼쪽의 <b>[모의 응답 15명 체험]</b>을 눌러 바로 시연해 보세요.
+            </div>
+          </div>
+          <div class="tm-wc-top-bar">
+            <span class="tm-wc-top-label">상위 키워드 (클릭 시 제외)</span>
+            <div id="wcTopChips" class="tm-wc-chips"></div>
+          </div>
+        </div>
+
+        <!-- 2. 객관식 막대 차트 스테이지 -->
+        <div id="pollStage" class="tm-viz-box tm-poll-stage" style="display:none;">
+          <div id="pollBarsWrap" class="tm-poll-bars"></div>
+        </div>
+
+        <!-- 3. 1~5 척도 스테이지 -->
+        <div id="scaleStage" class="tm-viz-box tm-scale-stage" style="display:none;">
+          <div class="tm-scale-avg-card">
+            <span>실시간 평균 점수</span>
+            <strong id="scaleAvgNum">0.0</strong>
+            <small>/ 5.0점</small>
+          </div>
+          <div id="scaleDistWrap" class="tm-scale-dist"></div>
+          <div class="tm-scale-ends">
+            <span id="scaleEndMin">전혀 그렇지 않다 (1)</span>
+            <span id="scaleEndMax">매우 그렇다 (5)</span>
+          </div>
+        </div>
+
+        <!-- 4. 자유 의견 / Q&A 스테이지 -->
+        <div id="openStage" class="tm-viz-box tm-open-stage" style="display:none;">
+          <div id="openCardsWrap" class="tm-open-grid"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- A4 PDF 인쇄 전용 보고서 -->
+    <section id="printReport" class="tm-print-only" aria-hidden="true"></section>
+  </div>
+
+  <!-- ===================== 학생용 QR 참여 화면 ===================== -->
+  <div id="studentView" class="tm-stu-app" style="display:none;">
+    <div class="tm-stu-card">
+      <div class="tm-stu-head">
+        <span class="tm-stu-kicker" id="stuTypeKicker">실시간 참여</span>
+        <h1 id="stuQuestion">선생님 화면에 연결 중...</h1>
+        <p id="stuConnSub" class="tm-stu-sub">방에 접속하고 있습니다...</p>
+      </div>
+
+      <!-- 학생: 워드 클라우드 입력 -->
+      <div id="stuWcForm" class="tm-stu-section" style="display:none;">
+        <p class="tm-stu-guide">생각나는 핵심 단어를 짧게 입력해 제출하세요. (최대 <span id="stuMaxWords">3</span>개)</p>
+        <div id="stuWcInputs" class="tm-stu-inputs"></div>
+        <button type="button" class="tm-btn tm-btn-primary tm-btn-full" id="stuWcSubmitBtn">단어 제출하기</button>
+      </div>
+
+      <!-- 학생: 객관식 투표 -->
+      <div id="stuPollForm" class="tm-stu-section" style="display:none;">
+        <p class="tm-stu-guide">원하는 항목을 선택한 뒤 투표하기를 누르세요.</p>
+        <div id="stuPollChoices" class="tm-stu-choices"></div>
+        <button type="button" class="tm-btn tm-btn-primary tm-btn-full" id="stuPollSubmitBtn">투표 제출하기</button>
+      </div>
+
+      <!-- 학생: 1~5 척도 -->
+      <div id="stuScaleForm" class="tm-stu-section" style="display:none;">
+        <p class="tm-stu-guide">1점부터 5점 사이에서 해당하는 점수를 선택하세요.</p>
+        <div class="tm-stu-scale-row" id="stuScaleRow">
+          <button type="button" class="tm-scale-pick" data-val="1">1</button>
+          <button type="button" class="tm-scale-pick" data-val="2">2</button>
+          <button type="button" class="tm-scale-pick" data-val="3">3</button>
+          <button type="button" class="tm-scale-pick" data-val="4">4</button>
+          <button type="button" class="tm-scale-pick" data-val="5">5</button>
+        </div>
+        <div class="tm-stu-scale-labels">
+          <span id="stuScaleMinLbl">1점</span>
+          <span id="stuScaleMaxLbl">5점</span>
+        </div>
+        <button type="button" class="tm-btn tm-btn-primary tm-btn-full" id="stuScaleSubmitBtn">점수 제출하기</button>
+      </div>
+
+      <!-- 학생: 자유 의견 / Q&A -->
+      <div id="stuOpenForm" class="tm-stu-section" style="display:none;">
+        <input type="text" id="stuOpenAuthor" class="tm-input" placeholder="이름/별명 (비우면 익명)" style="margin-bottom:8px;">
+        <textarea id="stuOpenText" class="tm-input tm-textarea" rows="4" placeholder="질문이나 자유로운 생각을 적어 제출하세요."></textarea>
+        <button type="button" class="tm-btn tm-btn-primary tm-btn-full" id="stuOpenSubmitBtn" style="margin-top:10px;">의견 제출하기</button>
+      </div>
+
+      <div id="stuFeedback" class="tm-feedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== 대형 QR 참여 모달 ===================== -->
+  <div class="tm-modal" id="qrModal">
+    <div class="tm-modal-card">
+      <div class="tm-modal-head">
+        <h3>학생 QR 실시간 참여</h3>
+        <button type="button" class="tm-close" data-close="qrModal">&times;</button>
+      </div>
+      <div class="tm-modal-body tm-qr-body">
+        <p>스마트폰 카메라로 QR 코드를 스캔하면 별도 가입 없이 바로 응답할 수 있습니다.</p>
+        <div id="bigQrBox" class="tm-big-qr-box"></div>
+        <div class="tm-code-pill">방 코드 <strong id="bigRoomCode">----</strong></div>
+        <div class="tm-copy-row">
+          <input type="text" id="joinUrlInput" class="tm-input" readonly>
+          <button type="button" class="tm-btn tm-btn-primary" id="copyJoinBtn">복사</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="tm-toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
