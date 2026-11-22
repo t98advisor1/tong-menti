@@ -406,6 +406,20 @@ body.is-present .tm-present-bar {
 }
 .tm-mcard b { font-size: 0.82rem; color: #4f46e5; }
 .tm-mcard span { font-size: 0.76rem; color: #475569; line-height: 1.4; }
+.tm-manual-sub { margin: 0 0 10px; font-size: 0.8rem; color: #475569; }
+.tm-sample-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tm-sample-card {
+  margin: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px;
+  overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+.tm-sample-card img {
+  width: 100%; height: auto; display: block; border-bottom: 1px solid #e2e8f0;
+}
+.tm-sample-card figcaption {
+  padding: 8px 10px; font-size: 0.75rem; color: #334155; line-height: 1.4;
+}
+.tm-sample-card figcaption b { color: #1e1b4b; }
 
 .tm-toast {
   position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
