@@ -400,11 +400,13 @@
     function updateLiveUsersUI() {
       var cnt = Object.keys(activeConns).filter(function (k) { return activeConns[k] && activeConns[k].open; }).length;
       var pill = el('liveUsersPill');
-      var stateText = cnt <= 40 ? '쾌적 · 권장 ≤60명' : (cnt <= 65 ? '원활 · 합반 수준' : '혼잡 주의 · 방 분리 권장');
-      pill.textContent = '접속 중 ' + cnt + '명 (' + stateText + ')';
-      pill.classList.toggle('is-busy', cnt > 40 && cnt <= 65);
-      pill.classList.toggle('is-high', cnt > 65);
-      el('stageLiveUsers').textContent = String(cnt);
+      if (pill) {
+        var suffix = cnt <= 40 ? '' : (cnt <= 65 ? ' · 원활' : ' · 혼잡');
+        pill.textContent = '접속 ' + cnt + '명' + suffix;
+        pill.classList.toggle('is-busy', cnt > 40 && cnt <= 65);
+        pill.classList.toggle('is-high', cnt > 65);
+      }
+      if (el('stageLiveUsers')) el('stageLiveUsers').textContent = String(cnt);
     }
 
     function getPublicConfig() {
@@ -442,14 +444,14 @@
 
     function renderQrCodes() {
       var url = getJoinUrl();
-      el('miniRoomCode').textContent = state.roomCode;
-      el('stageRoomCode').textContent = state.roomCode;
-      el('bigRoomCode').textContent = state.roomCode;
-      el('joinUrlInput').value = url;
+      if (el('miniRoomCode')) el('miniRoomCode').textContent = state.roomCode;
+      if (el('stageRoomCode')) el('stageRoomCode').textContent = state.roomCode;
+      if (el('bigRoomCode')) el('bigRoomCode').textContent = state.roomCode;
+      if (el('joinUrlInput')) el('joinUrlInput').value = url;
       if (typeof window.qrcode === 'function') {
         var qr1 = window.qrcode(0, 'M'); qr1.addData(url); qr1.make();
-        el('miniQrBox').innerHTML = qr1.createSvgTag({ cellSize: 4, margin: 1 });
-        el('bigQrBox').innerHTML = qr1.createSvgTag({ cellSize: 6, margin: 2 });
+        if (el('miniQrBox')) el('miniQrBox').innerHTML = qr1.createSvgTag({ cellSize: 4, margin: 1 });
+        if (el('bigQrBox')) el('bigQrBox').innerHTML = qr1.createSvgTag({ cellSize: 6, margin: 2 });
       }
     }
 
@@ -1379,18 +1381,54 @@
     function togglePresent() {
       document.body.classList.toggle('is-present');
       var on = document.body.classList.contains('is-present');
-      el('fullscreenBtn').textContent = on ? '편집 화면 복귀' : '전체화면 송출';
+      el('fullscreenBtn').textContent = on ? '나가기' : '전체화면';
       setTimeout(renderStage, 80);
     }
     el('fullscreenBtn').addEventListener('click', togglePresent);
     el('presExitBtn').addEventListener('click', togglePresent);
+
+    // 사이드바 접기/펼치기
+    if (el('toggleSidebarBtn') && el('tmWorkspace')) {
+      el('toggleSidebarBtn').addEventListener('click', function () {
+        el('tmWorkspace').classList.toggle('is-sidebar-collapsed');
+        setTimeout(renderStage, 120);
+      });
+    }
+
+    // 더보기 드롭다운 메뉴
+    var moreBtn = el('moreMenuBtn');
+    var morePanel = el('moreMenuPanel');
+    function closeMoreMenu() {
+      if (morePanel) morePanel.classList.remove('show');
+      if (moreBtn) moreBtn.setAttribute('aria-expanded', 'false');
+    }
+    if (moreBtn && morePanel) {
+      moreBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = morePanel.classList.toggle('show');
+        moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      morePanel.querySelectorAll('.tm-dd-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+          if (item.tagName !== 'LABEL') closeMoreMenu();
+        });
+      });
+      document.addEventListener('click', function (e) {
+        if (morePanel.classList.contains('show') && !el('moreMenuWrap').contains(e.target)) {
+          closeMoreMenu();
+        }
+      });
+    }
 
     document.addEventListener('keydown', function (e) {
       var tag = document.activeElement && document.activeElement.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key === 'ArrowRight') goSlide(state.activeIndex + 1);
       else if (e.key === 'ArrowLeft') goSlide(state.activeIndex - 1);
-      else if (e.key === 'Escape' && document.body.classList.contains('is-present')) togglePresent();
+      else if (e.key === 'Escape') {
+        closeMoreMenu();
+        if (document.body.classList.contains('is-present')) togglePresent();
+      }
     });
 
     // 모달 제어
@@ -1415,7 +1453,7 @@
       navigator.clipboard.writeText(getJoinUrl()).then(function () { showToast('학생 참여 링크를 복사했습니다.'); });
     }
     el('copyJoinBtn').addEventListener('click', copyJoin);
-    el('copyLinkMiniBtn').addEventListener('click', copyJoin);
+    if (el('copyLinkMiniBtn')) el('copyLinkMiniBtn').addEventListener('click', copyJoin);
     window.addEventListener('resize', function () { renderStage(); });
 
     renderQrCodes();

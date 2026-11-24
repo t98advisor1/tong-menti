@@ -3,78 +3,94 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>T-ong 멘티미터 Pro | 실시간 워드클라우드 · 투표 · 순위 · 2×2 · 퀴즈 · 데이터 시각화</title>
+  <title>T-ong 멘티미터 | 간편 실시간 워드클라우드 · 투표 · 퀴즈</title>
   <link rel="stylesheet" href="./style.css">
   <script src="./qr-lib.js"></script>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
 </head>
 <body>
-  <!-- ===================== 교사용 통합 멘티미터 대시보드 ===================== -->
+  <!-- ===================== 교사용 간결한 멘티미터 대시보드 ===================== -->
   <div id="teacherView" class="tm-app">
     <header class="tm-header no-print">
       <div class="tm-brand">
+        <button type="button" class="tm-icon-btn" id="toggleSidebarBtn" title="편집 패널 접기/펼치기" aria-label="편집 패널 접기/펼치기">☰</button>
         <span class="tm-logo">M</span>
         <div class="tm-brand-txt">
-          <strong class="tm-brand-title">T-ong 멘티미터 Pro</strong>
+          <strong class="tm-brand-title">T-ong 멘티미터</strong>
           <div class="tm-status-line">
-            <span class="tm-conn-badge" id="connBadge">실시간 방 여는 중...</span>
-            <button type="button" class="tm-live-users" id="liveUsersPill" title="클릭하면 동시 접속자 권장 인원 및 관리 안내를 봅니다">접속 중 0명 (쾌적 · 권장 ≤60명)</button>
+            <span class="tm-conn-badge" id="connBadge">방 여는 중...</span>
+            <button type="button" class="tm-live-users" id="liveUsersPill" title="동시 접속 현황 및 안내 보기">접속 0명</button>
           </div>
         </div>
       </div>
 
-      <!-- 질문 화면 송출 전환 컨트롤 (슬라이드 네비게이션) -->
-      <div class="tm-slide-nav" aria-label="질문 화면 송출 전환">
-        <button type="button" class="tm-nav-btn" id="prevSlideBtn" title="이전 질문으로 학생 화면 즉시 전환 (←)">◀ 이전</button>
+      <!-- 중앙: 질문 슬라이드 전환 -->
+      <div class="tm-slide-nav" aria-label="질문 화면 전환">
+        <button type="button" class="tm-nav-btn" id="prevSlideBtn" title="이전 질문 (←)">◀</button>
         <span class="tm-slide-counter" id="slideCounterText">1 / 1</span>
-        <button type="button" class="tm-nav-btn" id="nextSlideBtn" title="다음 질문으로 학생 화면 즉시 전환 (→)">다음 ▶</button>
-        <button type="button" class="tm-nav-btn tm-nav-add" id="addSlideBtn" title="새 질문 슬라이드 추가">+ 질문 추가</button>
+        <button type="button" class="tm-nav-btn" id="nextSlideBtn" title="다음 질문 (→)">▶</button>
+        <button type="button" class="tm-nav-btn tm-nav-add" id="addSlideBtn" title="새 질문 추가">+ 질문 추가</button>
       </div>
 
+      <!-- 우측: 핵심 4개 액션만 노출 (나머지는 더보기 메뉴로 정리) -->
       <div class="tm-actions">
-        <button type="button" class="tm-btn tm-btn-help" id="openManualBtn">사용설명서</button>
-        <button type="button" class="tm-btn tm-btn-qr" id="openQrBtn">QR 참여코드</button>
-        <button type="button" class="tm-btn tm-btn-fs" id="fullscreenBtn">전체화면 송출</button>
-        <button type="button" class="tm-btn tm-btn-pdf" id="exportPdfBtn" title="전체 질문 결과를 구조화 표·그래프 포함 A4 PDF로 저장">PDF 보고서</button>
-        <a href="https://t98advisor1.github.io/tong-padlet/" target="_blank" rel="noopener noreferrer" class="tm-btn tm-btn-ghost">패들렛 ↗</a>
-        <a href="https://t-ong.vercel.app/" target="_blank" rel="noopener noreferrer" class="tm-btn tm-btn-ghost">T-ong ↗</a>
+        <button type="button" class="tm-btn tm-btn-qr" id="openQrBtn">QR 참여</button>
+        <button type="button" class="tm-btn tm-btn-fs" id="fullscreenBtn">전체화면</button>
+        <button type="button" class="tm-btn tm-btn-help" id="openManualBtn">사용법 · GIF</button>
+
+        <div class="tm-dropdown" id="moreMenuWrap">
+          <button type="button" class="tm-btn tm-btn-outline" id="moreMenuBtn" aria-expanded="false" aria-haspopup="true">더보기 ▾</button>
+          <div class="tm-dropdown-menu" id="moreMenuPanel" role="menu">
+            <div class="tm-dd-group-lbl">결과 저장 · 내보내기</div>
+            <button type="button" class="tm-dd-item" id="exportPdfBtn" role="menuitem">📄 A4 PDF 보고서 인쇄/저장</button>
+            <button type="button" class="tm-dd-item" id="exportCsvBtn" role="menuitem">📊 현재 질문 엑셀(CSV)</button>
+            <button type="button" class="tm-dd-item" id="exportAllCsvBtn" role="menuitem">📑 전체 질문 엑셀(CSV)</button>
+            <button type="button" class="tm-dd-item" id="exportPngBtn" role="menuitem">🖼️ 차트 이미지(PNG) 저장</button>
+            <div class="tm-dd-sep"></div>
+            <div class="tm-dd-group-lbl">수업 준비 · 백업</div>
+            <button type="button" class="tm-dd-item" id="exportJsonBtn" role="menuitem">💾 수업 질문 백업(.json)</button>
+            <label class="tm-dd-item" role="menuitem" style="cursor:pointer;">
+              📂 백업 파일 불러오기
+              <input type="file" id="importJsonInput" accept=".json,application/json" hidden>
+            </label>
+            <div class="tm-dd-sep"></div>
+            <div class="tm-dd-group-lbl">연계 도구</div>
+            <a href="https://t98advisor1.github.io/tong-padlet/" target="_blank" rel="noopener noreferrer" class="tm-dd-item" role="menuitem">🧩 T-ong 패들렛 열기 ↗</a>
+            <a href="https://t-ong.vercel.app/" target="_blank" rel="noopener noreferrer" class="tm-dd-item" role="menuitem">📘 T-ong 교무수첩 열기 ↗</a>
+          </div>
+        </div>
       </div>
     </header>
 
-    <div class="tm-workspace no-print">
-      <!-- 왼쪽 1열: 질문 슬라이드 목록 + 활동 유형 + 질문 편집 -->
+    <div class="tm-workspace no-print" id="tmWorkspace">
+      <!-- 왼쪽 편집 패널: 꼭 필요한 3단계만 간결하게 배치 -->
       <aside class="tm-sidebar" id="tmSidebar">
-        <!-- 슬라이드 덱 목록 -->
+        <!-- 1. 질문 목록 -->
         <div class="tm-side-sec">
           <div class="tm-sec-row">
-            <label class="tm-label">질문 슬라이드 목록 (클릭 시 학생 화면 전환)</label>
-            <button type="button" class="tm-btn tm-btn-xs" id="dupSlideBtn" title="현재 슬라이드 복제">복제</button>
+            <label class="tm-label">1. 질문 목록</label>
+            <button type="button" class="tm-btn tm-btn-xs" id="dupSlideBtn" title="현재 질문 복제">복제</button>
           </div>
           <div id="slideListWrap" class="tm-slide-list"></div>
         </div>
 
-        <!-- 8가지 멘티미터 전체 활동 유형 -->
+        <!-- 2. 질문 만들기 -->
         <div class="tm-side-sec">
-          <label class="tm-label" for="slideTypeSelect">활동 유형 (멘티미터 전체 8종)</label>
+          <label class="tm-label" for="slideTypeSelect">2. 활동 유형 &amp; 질문</label>
           <select id="slideTypeSelect" class="tm-input tm-select-bold">
-            <option value="wordcloud">1. 워드 클라우드 (키워드 빈도)</option>
-            <option value="poll">2. 객관식 투표 (막대·도넛·파이)</option>
-            <option value="scale">3. 척도 평가 (1~5점 평균·분포)</option>
-            <option value="ranking">4. 순위 매기기 (우선순위 가중 점수)</option>
-            <option value="points100">5. 100점 배분 (비중·예산 나누기)</option>
-            <option value="matrix2x2">6. 2×2 사분면 매트릭스 (X·Y 산점도)</option>
-            <option value="quiz">7. 실시간 퀴즈 대결 (정답·리더보드)</option>
-            <option value="open">8. 자유 의견 · Q&amp;A (실시간 카드)</option>
+            <option value="wordcloud">워드 클라우드 (단어 모으기)</option>
+            <option value="poll">객관식 투표 (막대 · 도넛)</option>
+            <option value="scale">척도 평가 (1~5점 평균)</option>
+            <option value="ranking">순위 매기기 (우선순위)</option>
+            <option value="points100">100점 배분 (비중 나누기)</option>
+            <option value="matrix2x2">2×2 사분면 (X·Y 산점도)</option>
+            <option value="quiz">실시간 퀴즈 (정답 · 순위표)</option>
+            <option value="open">자유 의견 · Q&amp;A</option>
           </select>
+          <textarea id="questionInput" class="tm-input tm-textarea" rows="2" placeholder="학생들에게 물어볼 질문을 입력하세요"></textarea>
         </div>
 
-        <!-- 질문 텍스트 -->
-        <div class="tm-side-sec">
-          <label class="tm-label" for="questionInput">질문 문구 (학생 폰에 실시간 반영)</label>
-          <textarea id="questionInput" class="tm-input tm-textarea" rows="2"></textarea>
-        </div>
-
-        <!-- 유형별 세부 설정 영역 -->
+        <!-- 유형별 세부 설정 (선택된 유형에 따라 1개만 표시) -->
         <div class="tm-side-sec" id="wcConfigSec">
           <label class="tm-label" for="wcMaxWordsSelect">학생 1인당 입력 단어 수</label>
           <select id="wcMaxWordsSelect" class="tm-input">
@@ -86,65 +102,55 @@
 
         <div class="tm-side-sec" id="optionsConfigSec" style="display:none;">
           <div class="tm-sec-row">
-            <label class="tm-label" id="optionsConfigLabel">선택지 항목 (2~6개)</label>
-            <button type="button" class="tm-btn tm-btn-xs" id="addOptionBtn">+ 항목 추가</button>
+            <label class="tm-label" id="optionsConfigLabel">선택지 (2~6개)</label>
+            <button type="button" class="tm-btn tm-btn-xs" id="addOptionBtn">+ 추가</button>
           </div>
           <div id="optionsList" class="tm-opt-list"></div>
-          <div id="quizCorrectHint" class="tm-mini-hint" style="display:none;">정답 라디오 버튼에 체크하면 학생 제출 시 자동 채점 및 리더보드가 집계됩니다.</div>
+          <div id="quizCorrectHint" class="tm-mini-hint" style="display:none;">앞의 동그라미로 정답을 지정하면 자동 채점됩니다.</div>
         </div>
 
         <div class="tm-side-sec" id="scaleConfigSec" style="display:none;">
-          <label class="tm-label">척도 양 끝 라벨 (1점 ~ 5점)</label>
-          <input type="text" id="scaleMinInput" class="tm-input" placeholder="1점 라벨">
-          <input type="text" id="scaleMaxInput" class="tm-input" placeholder="5점 라벨">
+          <label class="tm-label">척도 양 끝 설명 (1점 ~ 5점)</label>
+          <input type="text" id="scaleMinInput" class="tm-input" placeholder="1점 라벨 (예: 전혀 아니다)">
+          <input type="text" id="scaleMaxInput" class="tm-input" placeholder="5점 라벨 (예: 매우 그렇다)">
         </div>
 
         <div class="tm-side-sec" id="matrixConfigSec" style="display:none;">
-          <label class="tm-label">2×2 사분면 축 이름 설정 (1~10점)</label>
+          <label class="tm-label">사분면 가로·세로 축 이름</label>
           <input type="text" id="matrixXInput" class="tm-input" placeholder="가로축(X) 예: 중요도">
-          <input type="text" id="matrixYInput" class="tm-input" placeholder="세로축(Y) 예: 시급성 / 난이도">
+          <input type="text" id="matrixYInput" class="tm-input" placeholder="세로축(Y) 예: 시급성">
         </div>
 
-        <!-- 동시 접속·응답 제어 & 내보내기 -->
+        <!-- 3. 수업 진행 제어 (핵심 버튼만 깔끔하게) -->
         <div class="tm-side-sec">
-          <label class="tm-label">수업 송출 · 동시 응답 제어</label>
-          <div class="tm-toggle-grid">
-            <button type="button" class="tm-toggle-btn" id="toggleLockBtn" title="응답 접수 마감/재개">응답 열림</button>
-            <button type="button" class="tm-toggle-btn" id="toggleHideResBtn" title="투표 중 결과 가리기/공개">결과 공개중</button>
-            <button type="button" class="tm-toggle-btn active" id="toggleLimitOnceBtn" title="학생 기기당 1회만 제출 허용">1인 1회: ON</button>
+          <label class="tm-label">3. 수업 진행</label>
+          <div class="tm-toggle-grid tm-toggle-grid-2">
+            <button type="button" class="tm-toggle-btn active" id="toggleHideResBtn" title="투표 중 결과 가리기/공개">결과 공개중</button>
+            <button type="button" class="tm-toggle-btn active" id="toggleLockBtn" title="응답 접수 마감/재개">응답 열림</button>
           </div>
-          <div class="tm-side-btns">
-            <button type="button" class="tm-btn tm-btn-primary" id="simulateBtn">모의 학생 18명 응답 체험</button>
-            <div class="tm-btn-pair">
-              <button type="button" class="tm-btn tm-btn-xs" id="exportCsvBtn" title="현재 질문 결과를 엑셀(CSV)로 다운로드">현재 엑셀(CSV)</button>
-              <button type="button" class="tm-btn tm-btn-xs" id="exportAllCsvBtn" title="모든 질문 슬라이드 결과를 1개의 엑셀(CSV)로 통합 다운로드">전체 엑셀(CSV)</button>
-            </div>
-            <div class="tm-btn-pair">
-              <button type="button" class="tm-btn tm-btn-xs" id="exportJsonBtn" title="질문과 응답 전체를 JSON 파일로 백업 다운로드">수업 백업(.json)</button>
-              <label class="tm-btn tm-btn-xs" style="cursor:pointer;" title="저장해 둔 수업 백업(.json) 파일 불러오기">
-                백업 불러오기
-                <input type="file" id="importJsonInput" accept=".json,application/json" hidden>
-              </label>
-            </div>
-            <div class="tm-btn-pair">
-              <button type="button" class="tm-btn tm-btn-xs" id="exportPngBtn">차트 PNG 저장</button>
-              <button type="button" class="tm-btn tm-btn-xs tm-btn-danger" id="resetRespBtn">현재 응답 초기화</button>
-            </div>
-          </div>
+          <button type="button" class="tm-btn tm-btn-soft-primary tm-btn-full-sm" id="simulateBtn">✨ 모의 응답 18명 체험하기</button>
         </div>
 
-        <!-- 미니 QR 카드 -->
-        <div class="tm-mini-qr-card">
-          <div class="tm-mini-qr-head">
-            <span>학생 QR 즉시 참여</span>
+        <!-- 고급 설정 (접힘 상태로 기본 정리) -->
+        <details class="tm-advanced-box">
+          <summary>고급 설정 · 응답 초기화</summary>
+          <div class="tm-adv-inner">
+            <button type="button" class="tm-toggle-btn active" id="toggleLimitOnceBtn" title="학생 기기당 1회만 제출 허용">1인 1회 제한: ON</button>
+            <button type="button" class="tm-btn tm-btn-xs tm-btn-danger" id="resetRespBtn">현재 질문 응답 초기화</button>
+          </div>
+        </details>
+
+        <!-- 하단 1줄 참여코드 & 링크 복사 바 -->
+        <div class="tm-quick-code-bar">
+          <div class="tm-quick-code-info">
+            <span>참여 코드</span>
             <strong id="miniRoomCode">----</strong>
           </div>
-          <div id="miniQrBox" class="tm-mini-qr-box"></div>
-          <button type="button" class="tm-btn tm-btn-xs tm-btn-full" id="copyLinkMiniBtn">학생 참여 링크 복사</button>
+          <button type="button" class="tm-btn tm-btn-xs" id="copyLinkMiniBtn">링크 복사</button>
         </div>
       </aside>
 
-      <!-- 오른쪽: 대형 프로젝터 송출 + 그래프 시각화 전환 + 구조화 데이터 요약 -->
+      <!-- 오른쪽: 넓고 깔끔한 발표·시각화 스테이지 -->
       <main class="tm-stage" id="tmStage">
         <div class="tm-stage-top">
           <div class="tm-stage-head">
@@ -153,65 +159,64 @@
               <span class="tm-stage-state-badge" id="stageLockBadge" style="display:none;">응답 마감됨</span>
             </div>
             <h1 class="tm-stage-q" id="stageQuestionText">질문</h1>
-            <div class="tm-stage-meta">
-              <span>참여 코드 <b id="stageRoomCode">----</b></span>
-              <span>실시간 응답 <b id="stageRespCount">0</b>건</span>
-              <span>접속 기기 <b id="stageLiveUsers">0</b>명</span>
-            </div>
           </div>
 
-          <!-- 그래프 시각화 유형 전환 바 -->
-          <div class="tm-viz-toolbar" id="vizToolbar">
-            <span class="tm-viz-lbl">시각화 보기:</span>
-            <button type="button" class="tm-viz-btn active" data-viz="default">기본 차트</button>
-            <button type="button" class="tm-viz-btn" data-viz="hbar">가로 막대</button>
-            <button type="button" class="tm-viz-btn" data-viz="vbar">세로 막대</button>
-            <button type="button" class="tm-viz-btn" data-viz="donut">도넛 비율</button>
-            <button type="button" class="tm-viz-btn" data-viz="table">구조화 데이터 표</button>
+          <!-- 한 줄 메타 + 차트 전환 바 -->
+          <div class="tm-stage-subbar">
+            <div class="tm-stage-meta">
+              <span>코드 <b id="stageRoomCode">----</b></span>
+              <span>응답 <b id="stageRespCount">0</b>건</span>
+              <span>접속 <b id="stageLiveUsers">0</b>명</span>
+            </div>
+
+            <div class="tm-viz-toolbar" id="vizToolbar">
+              <button type="button" class="tm-viz-btn active" data-viz="default">기본</button>
+              <button type="button" class="tm-viz-btn" data-viz="hbar">가로막대</button>
+              <button type="button" class="tm-viz-btn" data-viz="vbar">세로막대</button>
+              <button type="button" class="tm-viz-btn" data-viz="donut">도넛</button>
+              <button type="button" class="tm-viz-btn" data-viz="table">표</button>
+            </div>
           </div>
         </div>
 
         <!-- 결과 숨김 커버 (투표 중 스포일러 방지) -->
         <div id="hiddenCover" class="tm-hidden-cover" style="display:none;">
           <div class="tm-hidden-inner">
-            <h2>결과가 잠시 가려져 있습니다</h2>
-            <p>현재 <b id="hiddenRespCnt">0</b>건의 응답이 실시간으로 모이고 있습니다.</p>
-            <button type="button" class="tm-btn tm-btn-primary" id="revealNowBtn">지금 결과 공개하기</button>
+            <h2>결과가 가려져 있습니다</h2>
+            <p>현재 <b id="hiddenRespCnt">0</b>건의 응답이 모이고 있습니다.</p>
+            <button type="button" class="tm-btn tm-btn-primary" id="revealNowBtn">결과 공개하기</button>
           </div>
         </div>
 
         <!-- 메인 시각화 스테이지 -->
         <div class="tm-viz-card" id="mainVizCard">
-          <!-- Canvas 기반 시각화 (워드클라우드 / 도넛 / 2x2 산점도) -->
           <div id="canvasStageWrap" class="tm-canvas-wrap" style="display:none;">
             <canvas id="mainCanvas"></canvas>
             <div id="canvasEmptyHint" class="tm-empty-hint" style="display:none;">
-              학생들이 QR 코드로 참여하면 실시간 그래프가 그려집니다.<br>
-              왼쪽의 <b>[모의 학생 18명 응답 체험]</b> 버튼으로 바로 시연해 보세요.
+              상단 <b>[QR 참여]</b>를 띄워 학생들과 바로 시작해 보세요.<br>
+              왼쪽 <b>[모의 응답 18명 체험하기]</b>로 미리 테스트할 수도 있습니다.
             </div>
           </div>
 
-          <!-- HTML/CSS 애니메이션 차트 (가로·세로 막대, 척도, 순위, 퀴즈 리더보드, Q&A, 구조화 표) -->
           <div id="htmlStageWrap" class="tm-html-stage" style="display:none;"></div>
 
-          <!-- 워드클라우드 전용 상위 키워드 관리 바 -->
           <div id="wcTopBar" class="tm-wc-top-bar" style="display:none;">
             <span class="tm-wc-top-label">상위 키워드 (클릭 시 제외)</span>
             <div id="wcTopChips" class="tm-wc-chips"></div>
           </div>
         </div>
 
-        <!-- 하단 한국어 구조화 데이터 요약 바 (핵심 지표 자동 분석) -->
-        <section class="tm-summary-strip" id="summaryStrip" aria-label="구조화 데이터 요약"></section>
+        <!-- 하단 핵심 요약 지표 -->
+        <section class="tm-summary-strip" id="summaryStrip" aria-label="결과 요약"></section>
 
         <!-- 전체화면 송출 시 하단 플로팅 제어 바 -->
         <div class="tm-present-bar" id="presentBar" style="display:none;">
-          <button type="button" class="tm-btn tm-btn-xs" id="presPrevBtn">◀ 이전 질문</button>
+          <button type="button" class="tm-btn tm-btn-xs" id="presPrevBtn">◀ 이전</button>
           <span id="presSlideText">1 / 1</span>
-          <button type="button" class="tm-btn tm-btn-xs" id="presNextBtn">다음 질문 ▶</button>
+          <button type="button" class="tm-btn tm-btn-xs" id="presNextBtn">다음 ▶</button>
           <button type="button" class="tm-btn tm-btn-xs" id="presHideBtn">결과 가리기</button>
           <button type="button" class="tm-btn tm-btn-qr tm-btn-xs" id="presQrBtn">QR 띄우기</button>
-          <button type="button" class="tm-btn tm-btn-primary tm-btn-xs" id="presExitBtn">편집 화면 복귀</button>
+          <button type="button" class="tm-btn tm-btn-primary tm-btn-xs" id="presExitBtn">나가기</button>
         </div>
       </main>
     </div>
@@ -236,7 +241,6 @@
         현재 선생님이 이 질문의 응답을 마감했습니다. 다음 질문으로 넘어가면 화면이 자동으로 바뀝니다.
       </div>
 
-      <!-- 학생 입력 동적 컨테이너 -->
       <div id="stuDynamicForm" class="tm-stu-form"></div>
 
       <div id="stuFeedback" class="tm-feedback" style="display:none;"></div>
@@ -251,9 +255,9 @@
         <button type="button" class="tm-close" data-close="qrModal">&times;</button>
       </div>
       <div class="tm-modal-body tm-qr-body">
-        <p>스마트폰 카메라로 QR 코드를 스캔하면 별도 로그인 없이 바로 참여합니다.<br>선생님이 질문을 넘기면 <b>모든 학생 화면이 자동으로 함께 전환</b>됩니다.</p>
+        <p>스마트폰 카메라로 QR 코드를 <b>처음 1번만 스캔</b>하면 바로 참여합니다.<br>질문을 넘기면 모든 학생 화면이 자동으로 전환됩니다.</p>
         <div id="bigQrBox" class="tm-big-qr-box"></div>
-        <div class="tm-code-pill">방 코드 <strong id="bigRoomCode">----</strong></div>
+        <div class="tm-code-pill">참여 코드 <strong id="bigRoomCode">----</strong></div>
         <div class="tm-copy-row">
           <input type="text" id="joinUrlInput" class="tm-input" readonly>
           <button type="button" class="tm-btn tm-btn-primary" id="copyJoinBtn">링크 복사</button>
@@ -262,151 +266,185 @@
     </div>
   </div>
 
-  <!-- ===================== 한국어 전체화면 1단 사용 설명서 모달 (좌측 위계 네비게이션 + 큰 글씨 + 1단 대형 스크린샷 + 구글 시트 연동 안내) ===================== -->
+  <!-- ===================== 쉬운 사용 설명서 모달 (GIF + 스크린샷 + 동영상 대본) ===================== -->
   <div class="tm-modal tm-modal-fs" id="manualModal">
     <div class="tm-modal-card tm-modal-fullscreen">
       <div class="tm-modal-head tm-manual-topbar">
         <div>
-          <span class="tm-manual-kicker">T-ong 멘티미터 Pro 전체화면 상세 매뉴얼</span>
-          <h3>사용 설명서 · 구글 시트 연동 · 동시 접속 관리 · 1단 대형 스크린샷 안내</h3>
+          <span class="tm-manual-kicker">누구나 1분 만에 따라 하는 가이드</span>
+          <h3>T-ong 멘티미터 사용 설명서 (GIF · 스크린샷 · 시연 대본)</h3>
         </div>
-        <button type="button" class="tm-btn tm-btn-primary" data-close="manualModal">설명서 닫기 ✕</button>
+        <button type="button" class="tm-btn tm-btn-primary" data-close="manualModal">닫기 ✕</button>
       </div>
 
-      <!-- 상단 위계 네비게이션 바 (어디를 보고 있는지 한눈에 파악) -->
-      <nav class="tm-manual-nav" aria-label="사용설명서 목차 위계">
-        <a href="#mSec1" class="tm-mnav-link active"><span class="tm-mnav-step">STEP 1</span>30초 수업 시작</a>
-        <a href="#mSec2" class="tm-mnav-link"><span class="tm-mnav-step">STEP 2</span>8종 활동 안내</a>
-        <a href="#mSec3" class="tm-mnav-link"><span class="tm-mnav-step">STEP 3</span>구글 시트 연동 방법</a>
-        <a href="#mSec4" class="tm-mnav-link"><span class="tm-mnav-step">STEP 4</span>동시 접속 · 개별 사용</a>
-        <a href="#mSec5" class="tm-mnav-link"><span class="tm-mnav-step">STEP 5</span>다운로드 · 백업</a>
-        <a href="#mSec6" class="tm-mnav-link"><span class="tm-mnav-step">STEP 6</span>1단 대형 스크린샷</a>
+      <nav class="tm-manual-nav" aria-label="사용설명서 목차">
+        <a href="#mSecGif" class="tm-mnav-link active"><span class="tm-mnav-step">1</span>빠른 GIF 가이드</a>
+        <a href="#mSecShot" class="tm-mnav-link"><span class="tm-mnav-step">2</span>스크린샷 설명서</a>
+        <a href="#mSecScript" class="tm-mnav-link"><span class="tm-mnav-step">3</span>동영상 시연 대본</a>
+        <a href="#mSecTypes" class="tm-mnav-link"><span class="tm-mnav-step">4</span>8종 활동 · FAQ</a>
       </nav>
 
       <div class="tm-modal-body tm-manual-body-fs">
-        <section class="tm-manual-sec-fs" id="mSec1">
-          <div class="tm-msec-badge">STEP 1 · 기본 수업 흐름</div>
-          <h4>30초 만에 실시간 질문·투표 수업 시작하기</h4>
-          <ol class="tm-big-list">
-            <li><b>질문 슬라이드 만들기</b>: 상단 <b>[+ 질문 추가]</b> 버튼으로 수업에 사용할 질문 슬라이드(워드클라우드, 객관식 투표, 척도, 순위, 100점 배분, 2×2 사분면, 퀴즈, Q&amp;A)를 순서대로 구성합니다.</li>
-            <li><b>QR 참여코드 화면 띄우기</b>: 상단 <b>[QR 참여코드]</b> 또는 <b>[전체화면 송출]</b>을 눌러 교실 TV·빔프로젝터에 띄웁니다.</li>
-            <li><b>학생 스마트폰 1회 스캔</b>: 학생들은 카메라로 QR 코드를 <b>처음 1번만 스캔</b>하면 됩니다. 별도 회원가입이나 앱 설치가 전혀 필요 없습니다.</li>
-            <li><b>질문 화면 실시간 송출 전환</b>: 선생님이 상단 <b>[◀ 이전 / 다음 ▶]</b>(또는 키보드 좌우 화살표 <code>←</code> <code>→</code>)로 질문을 넘기면 <b>접속한 모든 학생 스마트폰 화면이 자동으로 다음 질문으로 즉시 전환</b>됩니다.</li>
-            <li><b>결과 가리기 후 공개</b>: 투표 중 다른 학생의 응답에 휩쓸리지 않도록 <b>[결과 숨김중]</b>으로 가려 두었다가, 응답이 모이면 <b>[결과 공개]</b>를 눌러 그래프를 한 번에 보여줍니다.</li>
-          </ol>
-        </section>
+        <!-- SECTION 1: 빠른 GIF 가이드 -->
+        <section class="tm-manual-sec-fs" id="mSecGif">
+          <div class="tm-msec-badge">1. 빠르게 보는 움직이는 GIF 가이드</div>
+          <h4>핵심 조작 4가지를 10초씩 눈으로 바로 익혀 보세요</h4>
+          <p class="tm-manual-sub-fs">복잡한 글 대신 실제 화면을 조작하는 GIF로 핵심 흐름을 한눈에 볼 수 있습니다.</p>
 
-        <section class="tm-manual-sec-fs" id="mSec2">
-          <div class="tm-msec-badge">STEP 2 · 활동 유형 위계</div>
-          <h4>멘티미터 전체 8가지 활동 유형 상세 안내</h4>
-          <div class="tm-manual-stack-1col">
-            <div class="tm-mcard-1col"><b>1. 워드 클라우드 (키워드 빈도 시각화)</b><span>학생 1인당 1~3개의 핵심 단어를 제출하면 많이 나온 단어일수록 중앙에 크게 표시됩니다. 하단 상위 키워드 칩을 클릭해 부적절한 단어를 즉시 제외할 수 있습니다.</span></div>
-            <div class="tm-mcard-1col"><b>2. 객관식 투표 (막대 · 도넛 · 표 전환)</b><span>2~6개 선택지에 대해 실시간 득표수와 비율(%)을 집계합니다. 상단 [시각화 보기]에서 가로 막대, 세로 막대, 도넛 비율, 구조화 데이터 표로 즉시 바꿔 볼 수 있습니다.</span></div>
-            <div class="tm-mcard-1col"><b>3. 1~5 척도 평가 (평균 · 중앙값 · 표준편차)</b><span>수업 이해도나 동의 정도를 1~5점으로 수집해 학급 평균 점수, 중앙값, 표준편차(의견 일치도), 점수별 인원 분포 막대를 자동으로 계산합니다.</span></div>
-            <div class="tm-mcard-1col"><b>4. 순위 매기기 (우선순위 Borda 가중 집계)</b><span>학생들이 항목의 순위를 1위부터 N위까지 위아래(▲/▼)로 정렬해 제출하면, 순위별 가중 점수를 합산해 학급 전체의 종합 우선순위를 도출합니다.</span></div>
-            <div class="tm-mcard-1col"><b>5. 100점 배분 (비중 · 예산 나누기)</b><span>학생이 총 100점을 여러 항목에 자유롭게 나누어 배분하면 항목별 평균 배분 점수와 비중(%)을 도넛 차트와 막대그래프로 보여줍니다.</span></div>
-            <div class="tm-mcard-1col"><b>6. 2×2 사분면 매트릭스 (X축 · Y축 산점도)</b><span>가로축(예: 중요도)과 세로축(예: 시급성/난이도)을 각각 1~10점으로 평가받아 2차원 사분면 위에 개별 점과 빨간색 학급 평균 중심점을 찍어줍니다.</span></div>
-            <div class="tm-mcard-1col"><b>7. 실시간 퀴즈 대결 (자동 채점 · 속도 보너스 리더보드)</b><span>선생님이 미리 정답 항목을 체크해 두면, 학생이 정답을 맞혔을 때 응답 속도에 따라 500~1000점이 부여되고 실시간 Top 리더보드 순위가 발표됩니다.</span></div>
-            <div class="tm-mcard-1col"><b>8. 자유 의견 · Q&amp;A (실시간 카드 · 공감)</b><span>학생들의 서술형 의견이나 질문을 카드 형태로 실시간 수집하며, 공감(♥) 횟수 집계 및 개별 카드 삭제가 가능합니다.</span></div>
-          </div>
-        </section>
-
-        <section class="tm-manual-sec-fs" id="mSec3">
-          <div class="tm-msec-badge">STEP 3 · 구글 시트 연동 및 엑셀 저장 안내</div>
-          <h4>구글 시트(Google Sheets) 연동 및 데이터 활용 방법</h4>
-          <ol class="tm-big-list">
-            <li><b>별도 설정 없이도 즉시 수업 가능</b>: T-ong 멘티미터 Pro는 기본적으로 <b>무설정 실시간 P2P 방</b>으로 즉시 동작하므로, 구글 시트를 연결하지 않아도 QR 코드만으로 바로 수업을 진행할 수 있습니다.</li>
-            <li><b>1클릭 구글 시트 · 엑셀(CSV) 호환 내보내기</b>: 왼쪽 메뉴의 <b>[현재 엑셀(CSV)]</b> 또는 <b>[전체 엑셀(CSV)]</b> 버튼을 누르면 모든 질문의 구조화 집계표가 한글 깨짐 없는 표준 CSV로 다운로드되며, 이를 <b>구글 드라이브 → Google 스프레드시트</b>에서 바로 열어 학급 기록으로 영구 보관할 수 있습니다.</li>
-            <li><b>T-ong 교무수첩 · 패들렛 마스터 시트와 함께 쓰기</b>:
-              <br>· <b>1단계 (사본 복사)</b>: T-ong 교무수첩 상단 <b>[1 Google 시트 연동]</b>에서 마스터 시트 사본을 내 구글 드라이브에 복사합니다.
-              <br>· <b>2단계 (Apps Script 웹앱 배포)</b>: 시트 상단 메뉴 <b>[확장 프로그램 → Apps Script]</b>에서 <b>[배포 → 새 배포 → 유형: 웹 앱 · 액세스 권한: 모든 사용자]</b>로 배포해 생성된 <code>https://script.google.com/macros/s/.../exec</code> 주소를 복사합니다.
-              <br>· <b>3단계 (연결 및 영구 동기화)</b>: 복사한 웹앱 URL을 T-ong 교무수첩과 T-ong 패들렛의 <b>[연동 · 설정]</b>에 붙여넣으면 모든 수업 기록이 선생님 본인의 구글 시트에 자동 저장됩니다.
-            </li>
-          </ol>
-        </section>
-
-        <section class="tm-manual-sec-fs" id="mSec4">
-          <div class="tm-msec-badge">STEP 4 · 동시 접속자 수 &amp; 교사별 독립 사용</div>
-          <h4>동시 접속자 수 권장 기준 및 전국 교사 개별 독립 사용 원리</h4>
-          <ul class="tm-big-list">
-            <li><b>모든 선생님이 100% 개별 독립 사용 가능</b>: 전국 수백~수천 명의 선생님이 같은 주소(<code>tong-menti</code>)에 동시에 접속해도 각 선생님의 브라우저에만 질문·응답이 저장되고, <b>선생님마다 고유한 6자리 방 코드</b>가 개별 생성되므로 다른 학교·다른 반 데이터와 절대 섞이지 않습니다.</li>
-            <li><b>1개 방 기준 권장 동시 접속 학생 수</b>:
-              <br>· <b>1 ~ 40명 (일반 학급 1개 반)</b>: 매우 쾌적 (초록 배지 · 0.1초 이내 즉시 반영)
-              <br>· <b>41 ~ 60명 (2개 반 합반 · 소강당)</b>: 원활 (노랑 배지 · 자동 배치 렌더링으로 화면 끊김 방지)
-              <br>· <b>60명 초과 (전교생 · 대강당 100명 이상)</b>: 교사 PC 1대의 브라우저 P2P 연결 한계로 지연이 생길 수 있으므로 <b>반별·학년별로 방을 나누어 진행</b>하는 것을 권장합니다.
-            </li>
-            <li><b>1인 1회 제한 (중복 투표 차단)</b>: 왼쪽 <b>[1인 1회: ON]</b>을 켜 두면 학생 스마트폰마다 고유 식별자가 부여되어 한 질문에 여러 번 중복 제출하는 것을 자동으로 막아줍니다.</li>
-          </ul>
-        </section>
-
-        <section class="tm-manual-sec-fs" id="mSec5">
-          <div class="tm-msec-badge">STEP 5 · 교사용 다운로드 · 수업 백업</div>
-          <h4>수업 전 질문 백업 &amp; 수업 후 결과 보고서 다운로드</h4>
-          <ul class="tm-big-list">
-            <li><b>수업 백업(.json) 및 불러오기</b>: 집이나 교무실 PC에서 미리 여러 개의 질문 슬라이드를 만든 뒤 <b>[수업 백업(.json)]</b>으로 저장해 두면, 교실 TV/전자칠판 PC에서 <b>[백업 불러오기]</b>로 1초 만에 질문 세트를 그대로 불러올 수 있습니다.</li>
-            <li><b>전체 엑셀(CSV) 통합 다운로드</b>: 수업이 끝난 뒤 <b>[전체 엑셀(CSV)]</b>을 누르면 오늘 진행한 모든 질문 슬라이드의 항목·수치·비율(%)이 하나의 표로 깔끔하게 저장됩니다.</li>
-            <li><b>A4 PDF 보고서 &amp; 차트 PNG 저장</b>: 상단 <b>[PDF 보고서]</b>를 누르면 전체 질문의 차트와 구조화 데이터 표가 A4 인쇄/PDF 저장용 보고서로 출력됩니다.</li>
-          </ul>
-        </section>
-
-        <section class="tm-manual-sec-fs" id="mSec6">
-          <div class="tm-msec-badge">STEP 6 · 1단 전체화면 대형 스크린샷 안내</div>
-          <h4>모의 학생 18명 응답 시뮬레이션 상세 화면 (1단 크게 보기)</h4>
-          <p class="tm-manual-sub-fs">작은 2단 분할 없이 실제 수업 화면을 1단 전체 너비로 크게 보여주는 상세 예시입니다. 왼쪽의 <b>[모의 학생 18명 응답 체험]</b> 버튼을 누르면 언제든 동일하게 테스트할 수 있습니다.</p>
           <div class="tm-sample-stack-1col">
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 1 / 6</span>
-                <strong>워드 클라우드 (키워드 빈도 시각화)</strong>
-                <p>학생들이 제출한 핵심 단어가 빈도에 비례해 중앙에 크게 배치되며, 하단 상위 키워드 칩(×)을 눌러 부적절한 단어를 즉시 제외하고 하단 요약 바에서 총 제출 수·고유 키워드 수·1위 키워드·상위 3개 집중도를 바로 확인합니다.</p>
+                <span class="tm-sc-num">GIF 1 · 30초 시작하기</span>
+                <strong>질문 입력하고 모의 응답으로 실시간 그래프 확인하기</strong>
+                <p>왼쪽에서 질문을 적고 <b>[모의 응답 18명 체험하기]</b>를 누르면 워드클라우드가 실시간으로 완성됩니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_1_wordcloud.png" alt="워드 클라우드 모의 응답 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/guide_1_quickstart.gif" alt="질문 입력 및 모의 응답 체험 GIF" loading="lazy">
             </figure>
 
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 2 / 6</span>
-                <strong>객관식 투표 (가로 막대 차트 &amp; 1·2위 자동 요약)</strong>
-                <p>선택지별 득표수와 비율(%)이 실시간 애니메이션 막대로 표시되며, 상단 [시각화 보기] 탭에서 세로 막대·도넛 비율·구조화 데이터 표로 즉시 전환할 수 있습니다.</p>
+                <span class="tm-sc-num">GIF 2 · QR 참여 &amp; 질문 전환</span>
+                <strong>학생 QR 코드 띄우고 질문 슬라이드 추가·전환하기</strong>
+                <p>상단 <b>[QR 참여]</b>로 코드를 보여준 뒤, <b>[+ 질문 추가]</b>와 <b>[◀ / ▶]</b> 버튼으로 다음 질문으로 넘깁니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_2_poll_hbar.png" alt="객관식 투표 가로 막대 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/guide_2_qr_and_slides.gif" alt="QR 참여코드 및 슬라이드 전환 GIF" loading="lazy">
             </figure>
 
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 3 / 6</span>
-                <strong>100점 배분 (도넛 비율 그래프 시각화)</strong>
-                <p>학생들이 100점을 항목별로 나누어 배분한 결과를 도넛 비율 차트와 우측 한글 범례(평균 점수 및 비율)로 한눈에 비교합니다.</p>
+                <span class="tm-sc-num">GIF 3 · 수업 진행 팁</span>
+                <strong>결과 가리기/공개 · 차트 모양 바꾸기 · 전체화면 송출</strong>
+                <p>투표 중에는 <b>[결과 가리기]</b>로 스포일러를 막고, 공개 후 <b>[가로막대·세로막대·도넛·표]</b>로 즉시 전환할 수 있습니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_3_points_donut.png" alt="100점 배분 도넛 비율 차트 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/guide_3_chart_and_hide.gif" alt="결과 가리기, 차트 전환, 전체화면 송출 GIF" loading="lazy">
             </figure>
 
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 4 / 6</span>
-                <strong>1~5 척도 평가 (세로 막대 분포 &amp; 평균·중앙값·표준편차)</strong>
-                <p>1점부터 5점까지의 응답 인원 분포를 세로 막대로 보여주고, 학급 전체 평균 점수·중앙값·표준편차(의견 분산도)를 하단에 자동 구조화합니다.</p>
+                <span class="tm-sc-num">GIF 4 · 저장 &amp; 백업</span>
+                <strong>[더보기 ▾] 메뉴에서 PDF 보고서 · 엑셀(CSV) · 수업 백업하기</strong>
+                <p>평소 화면은 단순하게 유지하고, 수업 전후에 필요한 저장·백업 기능은 우측 상단 <b>[더보기 ▾]</b>에 깔끔하게 모아 두었습니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_4_scale_vbar.png" alt="1~5 척도 평가 세로 막대 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/guide_4_export_more.gif" alt="더보기 메뉴 저장 및 백업 GIF" loading="lazy">
+            </figure>
+          </div>
+        </section>
+
+        <!-- SECTION 2: 스크린샷 사용 설명서 -->
+        <section class="tm-manual-sec-fs" id="mSecShot">
+          <div class="tm-msec-badge">2. 스크린샷으로 보는 단계별 사용 설명서</div>
+          <h4>화면 구성과 단계별 사용법 (큰 화면 캡처)</h4>
+          <div class="tm-sample-stack-1col">
+            <figure class="tm-sample-card-1col">
+              <figcaption>
+                <span class="tm-sc-num">STEP 1 · 기본 화면</span>
+                <strong>왼쪽에서 질문 3단계 편집, 오른쪽에서 실시간 결과 확인</strong>
+                <p>① 상단 바에서 질문 이동·QR·전체화면·더보기만 간편하게 선택하고, ② 왼쪽 패널에서 질문과 활동 유형을 바로 수정합니다.</p>
+              </figcaption>
+              <img src="./assets/guide/step_1_home_wordcloud.png" alt="간결해진 기본 화면과 워드클라우드" loading="lazy">
             </figure>
 
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 5 / 6</span>
-                <strong>2×2 사분면 매트릭스 (X·Y 산점도 &amp; 학급 평균 중심점)</strong>
-                <p>가로축(중요도)과 세로축(시급성) 1~10점 좌표를 사분면 위에 점으로 찍고, 학급 전체의 평균 중심점을 빨간색 원으로 강조해 우선순위를 직관적으로 파악합니다.</p>
+                <span class="tm-sc-num">STEP 2 · 학생 참여</span>
+                <strong>[QR 참여] 팝업 띄우기 — 로그인·앱 설치 없이 스캔 1번</strong>
+                <p>학생들은 카메라로 QR 코드를 한 번만 찍으면 바로 입장하며, 선생님이 질문을 넘기면 학생 화면도 자동으로 바뀝니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_5_matrix2x2.png" alt="2x2 사분면 매트릭스 산점도 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/step_2_qr_modal.png" alt="QR 참여 코드 모달 화면" loading="lazy">
             </figure>
 
             <figure class="tm-sample-card-1col">
               <figcaption>
-                <span class="tm-sc-num">화면 6 / 6</span>
-                <strong>실시간 퀴즈 대결 (정답 표시 &amp; 속도 보너스 Top 리더보드)</strong>
-                <p>정답 항목에 초록색 [정답] 배지와 학급 정답률(%)을 표시하며, 정답을 빠르게 맞힌 학생 순으로 실시간 Top 리더보드 순위를 발표합니다.</p>
+                <span class="tm-sc-num">STEP 3 · 객관식 투표 &amp; 차트 전환</span>
+                <strong>한 번의 클릭으로 막대 · 도넛 · 데이터 표로 변환</strong>
+                <p>수업 상황에 맞춰 결과 그래프를 가로막대, 세로막대, 도넛 차트, 구조화 표로 실시간 전환하며 하단 요약 지표를 함께 봅니다.</p>
               </figcaption>
-              <img src="./assets/guide/sample_6_quiz_leaderboard.png" alt="실시간 퀴즈 대결 리더보드 1단 대형 화면" loading="lazy">
+              <img src="./assets/guide/step_3_poll_chart.png" alt="객관식 투표 결과 및 차트 전환 화면" loading="lazy">
             </figure>
+
+            <figure class="tm-sample-card-1col">
+              <figcaption>
+                <span class="tm-sc-num">STEP 4 · 전체화면 송출</span>
+                <strong>편집 패널을 숨기고 교실 TV · 프로젝터에 깔끔하게 송출</strong>
+                <p>상단 <b>[전체화면]</b>을 누르면 왼쪽 편집 영역이 사라지고 질문과 그래프만 꽉 차게 보입니다. 하단 바에서 이전/다음/QR을 바로 제어합니다.</p>
+              </figcaption>
+              <img src="./assets/guide/step_4_fullscreen.png" alt="전체화면 송출 화면" loading="lazy">
+            </figure>
+
+            <figure class="tm-sample-card-1col">
+              <figcaption>
+                <span class="tm-sc-num">STEP 5 · 결과 저장 &amp; 수업 백업</span>
+                <strong>[더보기 ▾]에서 PDF 보고서 · 엑셀(CSV) · JSON 백업 한 번에</strong>
+                <p>수업 전 미리 만든 질문을 <b>수업 질문 백업(.json)</b>으로 저장했다가 교실 PC에서 불러오고, 수업 후 <b>PDF 보고서</b>나 <b>엑셀(CSV)</b>로 기록을 남깁니다.</p>
+              </figcaption>
+              <img src="./assets/guide/step_5_more_menu.png" alt="더보기 메뉴 저장 및 백업 화면" loading="lazy">
+            </figure>
+          </div>
+        </section>
+
+        <!-- SECTION 3: 동영상 촬영·음성 녹음용 시연 대본 -->
+        <section class="tm-manual-sec-fs" id="mSecScript">
+          <div class="tm-msec-badge">3. 동영상 사용 설명서 시연 대본 (약 2분 20초)</div>
+          <h4>화면을 직접 조작하며 녹화할 수 있는 안내 대본</h4>
+          <p class="tm-manual-sub-fs">아래 대본 순서대로 화면을 클릭하며 읽으면 누구나 쉽고 친절한 동영상 매뉴얼을 바로 완성할 수 있습니다.</p>
+
+          <div class="tm-script-list">
+            <article class="tm-script-card">
+              <div class="tm-script-head">
+                <span class="tm-sc-num">장면 1 · 0:00 ~ 0:25</span>
+                <strong>오프닝 &amp; 첫 화면 소개</strong>
+              </div>
+              <div class="tm-script-action"><b>[화면 조작]</b> T-ong 멘티미터 첫 화면 열기 → 마우스로 상단 바(질문 이동, QR 참여, 전체화면, 더보기)와 왼쪽 3단계 패널을 가볍게 가리킴</div>
+              <p class="tm-script-line">“안녕하세요! 별도 회원가입이나 앱 설치 없이 30초 만에 시작하는 실시간 소통 도구, T-ong 멘티미터 사용법을 안내해 드리겠습니다. 화면은 아주 단순합니다. 왼쪽에서 질문을 만들고, 오른쪽에서 학생들의 실시간 응답을 바로 확인할 수 있습니다.”</p>
+            </article>
+
+            <article class="tm-script-card">
+              <div class="tm-script-head">
+                <span class="tm-sc-num">장면 2 · 0:25 ~ 0:55</span>
+                <strong>질문 만들기 &amp; 모의 응답 미리보기</strong>
+              </div>
+              <div class="tm-script-action"><b>[화면 조작]</b> 왼쪽 질문 입력창에 질문 수정 → <b>[✨ 모의 응답 18명 체험하기]</b> 클릭 → 워드클라우드가 그려지는 모습과 하단 요약 지표 보여주기</div>
+              <p class="tm-script-line">“먼저 왼쪽에서 활동 유형을 고르고 질문을 입력합니다. 워드클라우드부터 객관식 투표, 척도, 순위, 퀴즈까지 8가지를 지원합니다. 수업 전에 어떻게 보일지 궁금하다면 ‘모의 응답 18명 체험하기’를 눌러 보세요. 이렇게 학생들이 보낸 단어가 크고 선명한 그래프로 즉시 정리됩니다.”</p>
+            </article>
+
+            <article class="tm-script-card">
+              <div class="tm-script-head">
+                <span class="tm-sc-num">장면 3 · 0:55 ~ 1:25</span>
+                <strong>QR 참여코드 띄우기 &amp; 질문 슬라이드 전환</strong>
+              </div>
+              <div class="tm-script-action"><b>[화면 조작]</b> 상단 초록색 <b>[QR 참여]</b> 클릭 → 큰 QR 코드 확인 후 닫기 → 상단 <b>[+ 질문 추가]</b> 클릭 → 유형을 ‘객관식 투표’로 변경 → <b>[◀ / ▶]</b> 버튼으로 슬라이드 이동</div>
+              <p class="tm-script-line">“이제 실제 수업을 시작해 볼까요? 상단의 ‘QR 참여’ 버튼을 누르면 큰 QR 코드가 나타납니다. 학생들은 스마트폰 카메라로 딱 한 번만 스캔하면 됩니다. 질문을 여러 개 준비하고 싶다면 상단 ‘+ 질문 추가’를 누르세요. 선생님이 이전·다음 버튼으로 질문을 넘기면, 학생들 스마트폰 화면도 자동으로 함께 넘어갑니다.”</p>
+            </article>
+
+            <article class="tm-script-card">
+              <div class="tm-script-head">
+                <span class="tm-sc-num">장면 4 · 1:25 ~ 1:55</span>
+                <strong>결과 가리기 · 차트 전환 · 전체화면 송출</strong>
+              </div>
+              <div class="tm-script-action"><b>[화면 조작]</b> 왼쪽 <b>[결과 공개중]</b> 클릭해 가리기 → <b>[결과 공개하기]</b> 클릭 → 차트 탭 <b>[가로막대 → 도넛 → 표]</b> 클릭 → 상단 <b>[전체화면]</b> 클릭 후 하단 제어 바 보여주기 → <b>[나가기]</b></div>
+              <p class="tm-script-line">“투표 중에 친구들 눈치를 보지 않게 하려면 ‘결과 가리기’를 켜 두었다가, 응답이 모이면 한 번에 공개해 보세요. 결과는 클릭 한 번으로 막대그래프, 도넛 차트, 데이터 표로 바꿀 수 있습니다. 교실 TV나 프로젝터에 띄울 때는 상단 ‘전체화면’을 누르면 편집 메뉴가 사라지고 질문과 그래프만 깔끔하게 보여집니다.”</p>
+            </article>
+
+            <article class="tm-script-card">
+              <div class="tm-script-head">
+                <span class="tm-sc-num">장면 5 · 1:55 ~ 2:20</span>
+                <strong>저장 · 백업 &amp; 마무리</strong>
+              </div>
+              <div class="tm-script-action"><b>[화면 조작]</b> 우측 상단 <b>[더보기 ▾]</b> 클릭 → PDF 보고서, 엑셀(CSV), 수업 백업(.json) 항목을 차례로 가리킨 뒤 닫기</div>
+              <p class="tm-script-line">“마지막으로 수업 기록 저장이나 사전 준비 파일 백업은 우측 상단 ‘더보기’ 메뉴에 모두 모여 있습니다. 수업이 끝난 뒤 A4 PDF 보고서나 엑셀 파일로 한 번에 내려받아 구글 시트에도 바로 올릴 수 있습니다. 이제 T-ong 멘티미터로 더 쉽고 활기찬 수업을 시작해 보세요!”</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- SECTION 4: 8종 활동 & FAQ -->
+        <section class="tm-manual-sec-fs" id="mSecTypes">
+          <div class="tm-msec-badge">4. 8가지 활동 유형 &amp; 자주 묻는 질문</div>
+          <h4>지원 활동 유형 및 동시 접속 · 구글 시트 안내</h4>
+          <div class="tm-manual-stack-1col">
+            <div class="tm-mcard-1col"><b>1. 워드 클라우드 / 2. 객관식 투표 / 3. 척도 평가(1~5점) / 4. 순위 매기기</b><span>단어 빈도 시각화, 다지선다 투표, 평균·표준편차 척도 분석, 우선순위 가중 집계를 지원합니다.</span></div>
+            <div class="tm-mcard-1col"><b>5. 100점 배분 / 6. 2×2 사분면 / 7. 실시간 퀴즈 / 8. 자유 의견 · Q&amp;A</b><span>예산/비중 배분, X·Y 산점도, 정답 속도 보너스 리더보드, 실시간 공감 카드를 지원합니다.</span></div>
+            <div class="tm-mcard-1col"><b>동시 접속 &amp; 교사별 독립 사용</b><span>선생님마다 고유 6자리 방 코드가 자동 생성되어 다른 반 데이터와 섞이지 않습니다. 1개 방 기준 1~40명 매우 쾌적, 최대 60명까지 원활합니다.</span></div>
+            <div class="tm-mcard-1col"><b>구글 시트 연동 &amp; 백업</b><span>별도 설정 없이 바로 수업할 수 있으며, <b>[더보기 ▾ → 전체 질문 엑셀(CSV)]</b> 파일을 구글 드라이브 스프레드시트에서 바로 열거나 <b>수업 백업(.json)</b>으로 교실 PC에 옮겨 쓸 수 있습니다.</span></div>
           </div>
         </section>
       </div>
